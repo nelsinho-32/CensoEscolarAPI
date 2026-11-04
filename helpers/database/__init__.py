@@ -2,8 +2,9 @@ import sqlite3
 from flask import g
 
 from helpers.application import app
+from helpers.enviroment import enviroment
 
-DATABASE = 'censoescolar.db'
+DATABASE = enviroment.get("DB_NAME")
 
 
 def get_connection():

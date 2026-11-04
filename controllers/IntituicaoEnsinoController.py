@@ -7,9 +7,10 @@ from services.InstituicaoEnsinoService import InstituicaoEnsinoService
 from helpers.database import get_connection
 from helpers.logger import logger
 
+from services.InstituicaoEnsinoService import InstituicaoEnsinoService
+
 instituicaoEnsinoSchema = InstituicaoEnsinoSchema()
 instituicoesEnsinoSchema = InstituicaoEnsinoSchema(many=True)
-
 instituicaoEnsinoCompactoSchema = InstituicaoEnsinoCompactoSchema(many=True)
 
 
@@ -46,35 +47,24 @@ def get_all_instituicoes():
 
     instituicaoEnsinoService = InstituicaoEnsinoService()
     instituicoes = instituicaoEnsinoService.get_all()
-
     logger.info("Finalizando o processamento da Listagem")
     return jsonify(instituicoesEnsinoSchema.dump(instituicoes)), 200
 
 
 @instituicao_ensino_bp.get("/<int:id>")
 def get_instituicao_by_id(id):
-
-    connection = get_connection()
     try:
-        cursor = connection.cursor()
-        cursor.execute("""
-            SELECT id, no_entidade, co_entidade, no_uf, sg_uf, co_uf, no_municipio, co_municipio, nu_ano_censo, qt_mat_bas, qt_mat_inf, qt_mat_fund, qt_mat_med, qt_mat_prof, qt_mat_eja, qt_mat_esp, created
-            FROM tb_instituicao_ensino
-            WHERE id = ?
-        """, (id,))
-        row = cursor.fetchone()
-
-        if row is None:
+        service = InstituicaoEnsinoService()
+        instituicaoEnsino = service.get_by_id(id)
+        if instituicaoEnsino is None:
             return {
                 "mensagem": "Instituição de ensino não encontrada"
             }, 404
-
-        instituicao = row_to_instituicao(row)
-
-        return jsonify(instituicaoEnsinoSchema.dump(instituicao)), 200
+        return jsonify(instituicaoEnsinoSchema.dump(instituicaoEnsino)), 200
     except OperationalError:
-        connection.rollback()
-        raise
+        return {
+            "mensagem": "Problema ao estabelecer a "
+        }, 500
 
 
 @instituicao_ensino_bp.post("/")
