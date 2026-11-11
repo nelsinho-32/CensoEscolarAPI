@@ -1,4 +1,4 @@
-CREATE TABLE tb_instituicao_ensino (
+CREATE TABLE IF NOT EXISTS tb_instituicao_ensino (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     no_entidade TEXT NOT NULL,
     co_entidade TEXT NOT NULL,
@@ -15,7 +15,7 @@ CREATE TABLE tb_instituicao_ensino (
     qt_mat_prof INTEGER NOT NULL,
     qt_mat_eja INTEGER NOT NULL,
     qt_mat_esp INTEGER NOT NULL,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     deleted_at TIMESTAMP NULL
 );
 
@@ -25,4 +25,4 @@ CREATE TABLE IF NOT EXISTS tb_usuario (
     cpf TEXT NOT NULL UNIQUE,
     nascimento TEXT,
     email TEXT
-)
+);

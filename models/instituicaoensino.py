@@ -22,11 +22,12 @@ class InstituicaoEnsino:
         qt_mat_eja,
         qt_mat_esp,
         id=None,
-        created=None
+        created=None,
+        deleted_at=None
     ):
         self.id = id
         self.no_entidade = no_entidade
-        self.co_entidade = co_entidade
+        self.co_entidade = str(co_entidade)
         self.no_uf = no_uf
         self.sg_uf = sg_uf
         self.co_uf = co_uf
@@ -40,9 +41,32 @@ class InstituicaoEnsino:
         self.qt_mat_prof = qt_mat_prof
         self.qt_mat_eja = qt_mat_eja
         self.qt_mat_esp = qt_mat_esp
-        if (created is not None):
+        if isinstance(created, str):
             created = datetime.fromisoformat(created)
         self.created = created
+        if isinstance(deleted_at, str):
+            deleted_at = datetime.fromisoformat(deleted_at)
+        self.deleted_at = deleted_at
+
+    def toDict(self):
+        return {
+            "id": str(self.id) if self.id is not None else None,
+            "no_entidade": self.no_entidade,
+            "co_entidade": self.co_entidade,
+            "no_uf": self.no_uf,
+            "sg_uf": self.sg_uf,
+            "co_uf": self.co_uf,
+            "no_municipio": self.no_municipio,
+            "co_municipio": self.co_municipio,
+            "nu_ano_censo": self.nu_ano_censo,
+            "qt_mat_bas": self.qt_mat_bas,
+            "qt_mat_inf": self.qt_mat_inf,
+            "qt_mat_fund": self.qt_mat_fund,
+            "qt_mat_med": self.qt_mat_med,
+            "qt_mat_prof": self.qt_mat_prof,
+            "qt_mat_eja": self.qt_mat_eja,
+            "qt_mat_esp": self.qt_mat_esp
+        }
 
 
 class InstituicaoEnsinoCompactoSchema(Schema):

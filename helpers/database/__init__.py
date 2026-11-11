@@ -4,7 +4,7 @@ from flask import g
 from helpers.application import app
 from helpers.enviroment import enviroment
 
-DATABASE = enviroment.get("DB_NAME")
+DATABASE = enviroment.get("DB_NAME", "censoescolar.db")
 
 
 def get_connection():
