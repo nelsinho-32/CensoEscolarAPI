@@ -1,57 +1,86 @@
-import sqlite3
+import os
 import json
+import psycopg2
 from helpers.enviroment import enviroment
 
-DATABASE = enviroment.get("DB_NAME", "censoescolar.db")
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+SCHEMA_PATH = os.path.join(BASE_DIR, 'schema.sql')
+INSTITUICOES_JSON_PATH = os.path.join(BASE_DIR, 'instituicoes.json')
 
-connection = None
 
-try:
-    connection = sqlite3.connect(DATABASE)
-    cursor = connection.cursor()
+def init_db():
+    host = enviroment.get("DB_HOST", "localhost")
+    port = int(enviroment.get("DB_PORT", 5435))
+    dbname = enviroment.get("DB_NAME", "censoescolar")
+    user = enviroment.get("DB_USER", "postgres")
+    password = enviroment.get("DB_PASSWORD", "123456")
 
-    cursor.execute("DROP TABLE IF EXISTS tb_instituicao_ensino;")
-
-    with open('schema.sql', encoding='utf-8') as file:
-        connection.executescript(file.read())
-
-    with open('instituicoes.json', 'r', encoding='utf-8') as f:
-        instituicoes = json.load(f)
-
-    registros = [
-        (
-            item["no_entidade"],
-            str(item["co_entidade"]),
-            item["no_uf"],
-            item["sg_uf"],
-            int(item["co_uf"]),
-            item["no_municipio"],
-            int(item["co_municipio"]),
-            int(item["nu_ano_censo"]),
-            int(item["qt_mat_bas"]),
-            int(item["qt_mat_inf"]),
-            int(item["qt_mat_fund"]),
-            int(item["qt_mat_med"]),
-            int(item["qt_mat_prof"]),
-            int(item["qt_mat_eja"]),
-            int(item["qt_mat_esp"])
+    connection = None
+    try:
+        connection = psycopg2.connect(
+            host=host,
+            port=port,
+            dbname=dbname,
+            user=user,
+            password=password
         )
-        for item in instituicoes
-    ]
+        cursor = connection.cursor()
 
-    cursor.executemany("""
-        INSERT INTO tb_instituicao_ensino (
-            no_entidade, co_entidade, no_uf, sg_uf, co_uf,
-            no_municipio, co_municipio, nu_ano_censo,
-            qt_mat_bas, qt_mat_inf, qt_mat_fund, qt_mat_med,
-            qt_mat_prof, qt_mat_eja, qt_mat_esp
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    """, registros)
 
-    connection.commit()
-    print(f"Banco inicializado e {len(registros)} instituições migradas do JSON com sucesso.")
-except sqlite3.Error as e:
-    print(f'O sqlite lançou uma exceção: {str(e)}')
-finally:
-    if connection is not None:
-        connection.close()
+        if os.path.exists(SCHEMA_PATH):
+            with open(SCHEMA_PATH, encoding='utf-8') as file:
+                cursor.execute(file.read())
+
+        registros = []
+        if os.path.exists(INSTITUICOES_JSON_PATH):
+            with open(INSTITUICOES_JSON_PATH, 'r', encoding='utf-8') as f:
+                instituicoes = json.load(f)
+
+            registros = [
+                (
+                    item.get("no_entidade"),
+                    str(item.get("co_entidade")),
+                    item.get("no_uf"),
+                    item.get("sg_uf"),
+                    int(item.get("co_uf", 0)),
+                    item.get("no_municipio"),
+                    int(item.get("co_municipio", 0)),
+                    int(item.get("nu_ano_censo", 2025)),
+                    int(item.get("qt_mat_bas", 0)),
+                    int(item.get("qt_mat_inf", 0)),
+                    int(item.get("qt_mat_fund", 0)),
+                    int(item.get("qt_mat_med", 0)),
+                    int(item.get("qt_mat_prof", 0)),
+                    int(item.get("qt_mat_eja", 0)),
+                    int(item.get("qt_mat_esp", 0))
+                )
+                for item in instituicoes
+            ]
+
+            if registros:
+                cursor.executemany("""
+                    INSERT INTO tb_instituicao_ensino (
+                        no_entidade, co_entidade, no_uf, sg_uf, co_uf,
+                        no_municipio, co_municipio, nu_ano_censo,
+                        qt_mat_bas, qt_mat_inf, qt_mat_fund, qt_mat_med,
+                        qt_mat_prof, qt_mat_eja, qt_mat_esp
+                    ) VALUES (
+                        %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
+                    )
+                    ON CONFLICT (co_entidade) DO NOTHING
+                """, registros)
+
+        connection.commit()
+        print(f"Banco inicializado e {len(registros)} instituições migradas com sucesso.")
+
+    except psycopg2.Error as e:
+        if connection:
+            connection.rollback()
+        print(f"Erro ao conectar ou executar no PostgreSQL: {e}")
+    finally:
+        if connection is not None and not connection.closed:
+            connection.close()
+
+
+if __name__ == '__main__':
+    init_db()

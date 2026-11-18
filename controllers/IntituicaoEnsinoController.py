@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify
-from sqlite3 import OperationalError
+from psycopg2 import OperationalError, Error
 from marshmallow import ValidationError
 
 from models.instituicaoensino import InstituicaoEnsinoSchema, InstituicaoEnsinoCompactoSchema
@@ -36,7 +36,7 @@ def get_instituicao_by_id(id):
                 "mensagem": "Instituição de ensino não encontrada"
             }, 404
         return jsonify(instituicaoEnsinoSchema.dump(instituicaoEnsino)), 200
-    except OperationalError:
+    except (OperationalError, Error):
         return {
             "mensagem": "Problema ao estabelecer a conexão com o banco de dados"
         }, 500
@@ -51,7 +51,7 @@ def post_instituicao():
         return jsonify(instituicaoEnsinoSchema.dump(instituicao)), 201
     except ValidationError as err:
         return {"erro": "Dados inválidos", "campos": err.messages}, 400
-    except OperationalError:
+    except (OperationalError, Error):
         return {
             "mensagem": "Problema ao salvar no banco de dados"
         }, 500
@@ -70,7 +70,7 @@ def putInstituicoes(id):
         return jsonify(instituicaoEnsinoSchema.dump(instituicao)), 200
     except ValidationError as err:
         return {"erro": "Dados inválidos", "campos": err.messages}, 400
-    except OperationalError:
+    except (OperationalError, Error):
         return {
             "mensagem": "Problema ao atualizar no banco de dados"
         }, 500
@@ -88,7 +88,7 @@ def deleteInstituicoes(id):
         return {
             "mensagem": "Instituição de ensino removida com sucesso"
         }, 200
-    except OperationalError:
+    except (OperationalError, Error):
         return {
             "mensagem": "Problema ao remover no banco de dados"
         }, 500

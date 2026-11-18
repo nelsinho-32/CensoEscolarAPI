@@ -2,3 +2,4 @@ __pycache__/*
 *.pyc
 venv
 .env
+microdados_censo_escolar_2025/dados/*.csv

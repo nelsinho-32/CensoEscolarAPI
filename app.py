@@ -12,8 +12,8 @@ app.register_blueprint(index_bp)
 
 
 def main(arg=[]):
-    host = enviroment.get("DB_HOST", "127.0.0.1")
-    port = int(enviroment.get("DB_PORT", 5000))
+    host = enviroment.get("API_HOST", "127.0.0.1")
+    port = int(enviroment.get("API_PORT", enviroment.get("PORT", 5000)))
     app.run(host=host, port=port, debug=True)
 
 
